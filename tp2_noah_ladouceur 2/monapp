@@ -1,0 +1,155 @@
+#!/bin/bash
+
+# Auteur : Noah Ladouceur
+# Script : monapp - Application Bash interactive pour TP2 IFT-2101
+# Objectif : Afficher des infos et excuter diverses oprations systme, rseau, disque, etc.
+
+clear
+NI="536 946 412"  # Numro d'identification  adapter
+PRENOM="Noah"
+NOM="Ladouceur"
+
+# --------------------------------------------
+# Fonctions gnrales
+# --------------------------------------------
+afficher_entete() {
+  echo "Prenom : $PRENOM"
+  echo "Nom    : $NOM"
+  echo "NI     : $NI"
+  echo "------------------------------"
+}
+
+pause_retour() {
+  echo "Appuyez sur Entre pour continuer..."
+  read -r _
+}
+
+# --------------------------------------------
+# Menu principal
+# --------------------------------------------
+menu_principal() {
+  clear
+  afficher_entete
+  echo "Menu Principal :"
+  echo "1) Systeme"
+  echo "2) Reseau"
+  echo "3) Disque"
+  echo "4) Bonus - Informations sur l'utilisateur"
+  echo "5) Quitter"
+  echo -n "Votre choix : "
+  read -r choix
+  executer_menu_principal "$choix"
+}
+
+executer_menu_principal() {
+  case $1 in
+    1) menu_systeme ;;
+    2) menu_reseau ;;
+    3) menu_disque ;;
+    4) menu_bonus ;;
+    5) echo "Au revoir $(whoami)!"; sleep 2; clear; exit 0 ;;
+    *) echo "Choix invalide"; sleep 1; menu_principal ;;
+  esac
+}
+
+# --------------------------------------------
+# Menu Systeme
+# --------------------------------------------
+menu_systeme() {
+  while true; do
+    clear
+    echo "Sous-menu SYSTEME"
+    echo "1) top (avec nombre de rafraichissements)"
+    echo "2) Infos processeurs"
+    echo "3) Fichiers ouverts (optionnel : nom service)"
+    echo "4) Revenir au menu principal"
+    echo -n "Votre choix : "
+    read -r choix arg
+    case $choix in
+      1) clear; [ -n "$arg" ] && top -n "$arg" || top; ;;
+      2) clear; lscpu; cat /proc/cpuinfo | grep "model name" | uniq; pause_retour ;;
+      3) clear; [ -n "$arg" ] && lsof -c "$arg" || lsof; pause_retour ;;
+      4) menu_principal ;;
+      *) echo "Choix invalide"; sleep 1 ;;
+    esac
+  done
+}
+
+# --------------------------------------------
+# Menu Disque
+# --------------------------------------------
+menu_disque() {
+  while true; do
+    clear
+    echo "Sous-menu DISQUE"
+    echo "1) Sur-utilisation (> 100Mo)"
+    echo "2) Infos systme de fichiers"
+    echo "3) Recherche de fichiers par mot-cl"
+    echo "4) Revenir au menu principal"
+    echo -n "Votre choix : "
+    read -r choix arg
+    case $choix in
+      1) clear; find / -type f -size +100M 2>/dev/null; pause_retour ;;
+      2) clear; df -h -T; pause_retour ;;
+      3) clear; find / -type f -name "*$arg*" 2>/dev/null; pause_retour ;;
+      4) menu_principal ;;
+      *) echo "Choix invalide"; sleep 1 ;;
+    esac
+  done
+}
+
+# --------------------------------------------
+# Menu Reseau
+# --------------------------------------------
+menu_reseau() {
+  while true; do
+    clear
+    echo "Sous-menu RESEAU"
+    echo "1) Sockets ouverts (distant)"
+    echo "2) Page distante (curl HTML)"
+    echo "3) Sockets en ecoute (local)"
+    echo "4) 10 dernires connexions (boucle 5 sec)"
+    echo "5) Revenir au menu principal"
+    echo -n "Votre choix : "
+    read -r choix arg
+    case $choix in
+      1) clear; echo -n "IP distante : "; read -r ip; nc -zv "$ip" 1-1024 ; pause_retour ;;
+      2) clear; echo -n "IP distante : "; read -r ip; curl "$ip"; pause_retour ;;
+      3) clear; ss -ltpn; pause_retour ;;
+      4) clear; for i in {1..10}; do netstat -ntu | tail -n 10; sleep 5; clear; done; pause_retour ;;
+      5) menu_principal ;;
+      *) echo "Choix invalide"; sleep 1 ;;
+    esac
+  done
+}
+
+# --------------------------------------------
+# Menu Bonus - Info utilisateur
+# --------------------------------------------
+menu_bonus() {
+  while true; do
+    clear
+    echo "BONUS : Infos utilisateur"
+    echo "1) Utilisateurs connects"
+    echo "2) Groupes de l'utilisateur"
+    echo "3) Revenir au menu principal"
+    echo -n "Votre choix : "
+    read -r choix
+    case $choix in
+      1) clear; who; pause_retour ;;
+      2) clear; groups; pause_retour ;;
+      3) menu_principal ;;
+      *) echo "Choix invalide"; sleep 1 ;;
+    esac
+  done
+}
+
+# --------------------------------------------
+# Excution automatique avec arguments
+# --------------------------------------------
+if [ -z "$1" ]; then
+  menu_principal
+else
+  executer_menu_principal "$1" "$2"
+fi
+
